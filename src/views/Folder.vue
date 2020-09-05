@@ -3,7 +3,7 @@
     <template v-if="!notFound">
       <div class="header">
         <div class="title">
-          {{ folder.name }}
+          {{ folder.title }}
         </div>
 
         <div class="actions">
@@ -40,11 +40,11 @@
             </tr>
           </thead>
           <tbody class="scroll">
-            <tr v-for="person in sortedPerson" :key="`person_tr_${person.name}`" @click="openPerson(person.name)">
+            <tr v-for="person in sortedPerson" :key="`person_tr_${person.id}`" @click="openPerson(person.name)">
               <td>{{ person.name }}</td>
-              <td>{{ person.job }}</td>
-              <td>{{ person.date }}</td>
-              <td>{{ person.passport }}</td>
+              <td>{{ person.career }}</td>
+              <td>{{ person.birth_date }}</td>
+              <td>{{ person.serial_number }}</td>
             </tr>
           </tbody>
         </table>
@@ -70,17 +70,17 @@
 
                 <div class="item passport">
                   <label for="passport">Паспорт:</label>
-                  <input type="text" maxlength="25" v-model="person.passport" id="passport">
+                  <input type="text" maxlength="25" v-model="person.serial_number" id="passport">
                 </div>
 
                 <div class="item date">
                   <label for="date">Дата:</label>
-                  <input type="date" v-model="person.date" id="date">
+                  <input type="date" v-model="person.birth_date" id="date">
                 </div>
 
                 <div class="item job">
                   <label for="job">Професія:</label>
-                  <input type="text" maxlength="25" v-model="person.job">
+                  <input type="text" maxlength="25" v-model="person.career">
                   <div class="error">
                       {{ error }}
                   </div>
@@ -117,13 +117,13 @@ export default {
     folder: {},
     search: "",
     showModal: false,
-    person: { name: "", passport: "", date: "", job: "" },
+    person: { name: "", serial_number: "", birth_date: "", career: "" },
     error: "",
   }),
   methods: {
     ...mapMutations(["createPerson"]),
     queryFolder(name) {
-      let folder = this.folders.filter(folder => folder.name === name)
+      let folder = this.folders.filter(folder => folder.title === name)
       if ( folder[0] ) {
         this.folder = folder[0]
       } else {
@@ -132,21 +132,21 @@ export default {
     },
     openPerson(person) {
       if ( this.$route.query.person !== person ) {
-        this.$router.push({ name: 'Person', query: { person: person, folder: this.folder.name } })
+        this.$router.push({ name: 'Person', query: { person: person, folder: this.folder.title } })
       }
     },
     addPerson() {
-      const { name, passport, date, job } = this.person
-      if ( name.length && passport.length && date.length && job.length ) {
+      const { name, serial_number, birth_date, career } = this.person
+      if ( name.length && serial_number.length && birth_date.length && career.length ) {
           if ( !this.folder.people.filter(person => person.name === name).length ) {
             this.createPerson({ person: JSON.parse(JSON.stringify(this.person)), folderName: this.folderName })
 
             this.showModal = false
 
             this.person.name = ""
-            this.person.passport = ""
-            this.person.date = ""
-            this.person.job = ""
+            this.person.serial_number = ""
+            this.person.birth_date = ""
+            this.person.career = ""
           } else {
               this.setError("людина під цим іменем вже існує")
           }
@@ -175,13 +175,13 @@ export default {
       if ( this.folder.people ) {
         let people = this.folder.people.filter(person => (
           person.name.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
-          person.job.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
-          person.date.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
-          person.passport.toLowerCase().trim().includes(this.search.toLowerCase().trim()) 
+          person.career.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
+          person.birth_date.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
+          person.serial_number.toLowerCase().trim().includes(this.search.toLowerCase().trim()) 
         ))
 
         if ( this.typeOfSort.type === 'date' ) {
-          people.sort((a,b) => new Date(b.date) - new Date(a.date));
+          people.sort((a,b) => b.birth_date - a.birth_date);
           people = this.typeOfSort.order === 'down' ? people.reverse() : people
         } else if ( this.typeOfSort.type === 'string' ) {
           people.sort((a, b) => a.name.localeCompare(b.name))

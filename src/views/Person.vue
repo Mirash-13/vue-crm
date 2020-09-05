@@ -12,19 +12,19 @@
 					<div class="option">
 						<span class="title">Професія: </span>
 						<span class="value">
-							{{ person.job }}
+							{{ person.career }}
 						</span>
 					</div>
 					<div class="option">
 						<span class="title">Дата: </span>
 						<span class="value">
-							{{ person.date }}
+							{{ person.birth_date }}
 						</span>
 					</div>
 					<div class="option">
 						<span class="title">Професія: </span>
 						<span class="value">
-							{{ person.passport }}
+							{{ person.serial_number }}
 						</span>
 					</div>
 				</div>
@@ -65,8 +65,8 @@ export default {
 		notFound: false
 	}),
 	methods: {
-		queryFolder(folderName, personName) {
-			let folder = this.folders.filter(folder => folder.name === folderName)[0]
+		queryFolder(folderTitle, personName) {
+			let folder = this.folders.filter(folder => folder.title === folderTitle)[0]
 			if ( folder ) {
 				let person = folder.people.filter(person => person.name === personName)[0]
 				if ( person ) {
@@ -81,7 +81,7 @@ export default {
 	},
     computed: {
 		...mapGetters(["folders"]),
-		folderName() {
+		folderTitle() {
 			return this.$route.query.folder
 		},
 		personName() {
@@ -89,7 +89,7 @@ export default {
 		}
 	},
     watch: {
-		folderName(val) {
+		folderTitle(val) {
 			this.queryFolder(val, this.$route.query.person)
 		},
 		personName(val) {

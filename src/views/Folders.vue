@@ -39,9 +39,9 @@
           </tr>
         </thead>
         <tbody class="scroll">
-          <tr v-for="folder in sortedFolders" :key="`folder_tr_${folder.name}`" @click="openFolder(folder.name)">
-            <td>{{ folder.name }}</td>
-            <td>{{ folder.date }}</td>
+          <tr v-for="folder in sortedFolders" :key="`folder_tr_${folder.id}`" @click="openFolder(folder.title)">
+            <td>{{ folder.title }}</td>
+            <td>{{ folder.time | handleDate}}</td>
           </tr>
         </tbody>
       </table>
@@ -62,15 +62,10 @@
                     <div class="input">
                       <div class="item name">
                         <label for="name">Ім'я:</label>
-                        <input type="text" maxlength="25" v-model="folder.name" id="name">
-                      </div>
-
-                      <div class="item date">
-                        <label for="date">Дата:</label>
-                        <input type="date" v-model="folder.date" id="date">
+                        <input type="text" maxlength="25" v-model="folder.title" id="name">
                         <div class="error">
-                              {{ error }}
-                          </div>
+                            {{ error }}
+                        </div>
                       </div>
                     </div>
 
@@ -101,20 +96,34 @@ export default {
       { obj: "Дата", type: "date", order: "top" },
     ],
     typeOfSort: { obj: "Назва", type: "string", order: "top" },
-    folder: { name: "", date: "" },
+    folder: { title: "" },
   }),
   methods: {
       ...mapMutations(['createFolder']),
+      addFolderDB(title) {
+        // await fetch(`${this.uri}/folders/`, { method: 'POST' })
+        // .then(res => res.text())
+        // .then((data) => {
+        //   try {
+        //     folders = JSON.parse(data);
+        //   } catch {
+        //     console.log('err')
+        //   }
+        // })
+      },
       addFolder() {
-          const { name, date } = this.folder
-          if ( name.length && date.length ) {
-              if ( !this.folders.filter(folder => folder.name === name).length  ) {
-                this.createPerson({ name, date, people: [] })
+          const { title } = this.folder
+          if ( title.length ) {
+              if ( !this.folders.filter(folder => folder.title === title).length  ) {
+                this.addFolderDB(title)
+                .then((data) => {
+                  console.log(data)
+                // this.createPerson({ title, date: new Date(), people: [] })
+                })
 
                 this.showModal = false
 
-                this.folder.name = ""
-                this.folder.date = ""
+                this.folder.title = ""
               } else {
                   this.setError("папка з таким ім'ям вже існує")
               }
@@ -140,22 +149,27 @@ export default {
           typeOfSort.order = 'top'
           this.typeOfSort = typeOfSort
         }
-      }
+      },
+  },
+  filters: {
+    handleDate(val) {
+      return new Date(val).toDateString()
+    }
   },
   computed: {
     ...mapGetters(['folders']),
     sortedFolders() {
       if ( this.folders ) {
         let folders = this.folders.filter(folder => (
-          folder.name.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
-          folder.date.toLowerCase().trim().includes(this.search.toLowerCase().trim())
+          folder.title.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
+          folder.time.toLowerCase().trim().includes(this.search.toLowerCase().trim())
         ))
 
         if ( this.typeOfSort.type === 'date' ) {
-          folders.sort((a,b) => new Date(b.date) - new Date(a.date));
+          folders.sort((a,b) => new Date(b.time) - new Date(a.time));
           folders = this.typeOfSort.order === 'down' ? folders.reverse() : folders
         } else if ( this.typeOfSort.type === 'string' ) {
-          folders.sort((a, b) => a.name.localeCompare(b.name))
+          folders.sort((a, b) => a.title.localeCompare(b.title))
           folders = this.typeOfSort.order === 'down' ? folders.reverse() : folders
         }
 

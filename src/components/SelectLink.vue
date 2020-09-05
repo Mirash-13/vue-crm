@@ -1,7 +1,7 @@
 <template>
   <div class="link">
-    <div class="title" @click="openFolder(folder.name)">
-      {{ folder.name }}
+    <div class="title" @click="openFolder(folder.title)">
+      {{ folder.title }}
 
       <div @click.stop="show = !show"
         v-if="folder.people.length"
@@ -40,7 +40,7 @@ export default {
     },
     openPerson(person) {
       if ( this.$route.query.person !== person ) {
-        this.$router.push({ name: 'Person', query: { person: person, folder: this.folder.name } })
+        this.$router.push({ name: 'Person', query: { person: person, folder: this.folder.title } })
       }
     }
   },
