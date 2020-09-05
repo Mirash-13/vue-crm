@@ -100,27 +100,11 @@ export default {
   }),
   methods: {
       ...mapMutations(['createFolder']),
-      addFolderDB(title) {
-        console.log(title)
-        // await fetch(`${this.uri}/folders/`, { method: 'POST' })
-        // .then(res => res.text())
-        // .then((data) => {
-        //   try {
-        //     folders = JSON.parse(data);
-        //   } catch {
-        //     console.log('err')
-        //   }
-        // })
-      },
       addFolder() {
           const { title } = this.folder
           if ( title.length ) {
               if ( !this.folders.filter(folder => folder.title === title).length  ) {
-                this.addFolderDB(title)
-                .then((data) => {
-                  console.log(data)
-                // this.createPerson({ title, date: new Date(), people: [] })
-                })
+                this.createPerson({ title, date: new Date(), people: [] })
 
                 this.showModal = false
 
