@@ -46,6 +46,10 @@
 					</v-button>
 				</div>
 			</div>
+
+			<div class="body">
+				<prepayment :info="{ personName, folderTitle }" :prepayments="person.prepayments"></prepayment>
+			</div>
 		</template>
 
 		<div class="not-found" v-else>
@@ -57,6 +61,7 @@
 <script>
 import { mapGetters } from 'vuex';
 import VButton from '../components/VButton'
+import Prepayment from '../components/Prepayment'
 
 export default {
 	name: "Person",
@@ -71,6 +76,7 @@ export default {
 				let person = folder.people.filter(person => person.name === personName)[0]
 				if ( person ) {
 					this.person = person
+					this.notFound = false
 				} else {
 					this.notFound = true
 				}
@@ -95,12 +101,16 @@ export default {
 		personName(val) {
 			this.queryFolder(this.$route.query.folder, val)
 		},
+		folders() {
+			this.queryFolder(this.$route.query.folder, this.$route.query.person)
+		},
 	},
 	mounted() {
 		this.queryFolder(this.$route.query.folder, this.$route.query.person)
 	},
 	components: {
-		VButton
+		VButton,
+		Prepayment
 	}
 };
 </script>
@@ -159,6 +169,9 @@ export default {
 			transition: .2s ease;
 		}
 	}
+  }
+  .body {
+	height: 100%;
   }
 }
 </style>

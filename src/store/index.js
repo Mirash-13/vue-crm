@@ -28,6 +28,13 @@ export default new Vuex.Store({
     },
     createPerson(state, { folderName, person }) {
       state.folders.filter(folder => folder.title === folderName)[0].people.push(person)
+    },
+    addPayment(state, { folderTitle, personName, payment }) {
+      payment.id = Math.random().toString(36).substr(2, 9)
+      let folder = state.folders.filter(folder => folder.title === folderTitle)[0]
+      let person = folder.people.filter(person => person.name === personName)[0]
+      person.prepayments.push(payment)
+      console.log(state.folders)
     }
   },
   actions: {

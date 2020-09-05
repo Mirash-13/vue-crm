@@ -1,9 +1,9 @@
 <template>
   <div class="folder">
-    <template v-if="!notFound">
+    <template v-if="prepayments">
       <div class="header">
         <div class="title">
-          {{ folder.title }}
+          Prepayments
         </div>
 
         <div class="actions">
@@ -14,7 +14,7 @@
               fontSize: '12px'
             }"
           >
-            дод. людину
+            дод. оплату
           </v-button>
         </div>
       </div>
@@ -40,11 +40,10 @@
             </tr>
           </thead>
           <tbody class="scroll">
-            <tr v-for="person in sortedPerson" :key="`person_tr_${person.id}`" @click="openPerson(person.name)">
-              <td>{{ person.name }}</td>
-              <td>{{ person.career }}</td>
-              <td>{{ person.birth_date }}</td>
-              <td>{{ person.serial_number }}</td>
+            <tr v-for="payment in sortedPrepayments" :key="`payment_tr_${payment.id}`">
+              <td>{{ payment.summ }}</td>
+              <td>{{ payment.description }}</td>
+              <td>{{ payment.date_of_pay }}</td>
             </tr>
           </tbody>
         </table>
@@ -63,24 +62,19 @@
             <div class="modal">
               <div class="title">Введіть дані: </div>
               <div class="input">
-                <div class="item name">
-                  <label for="name">Ім'я:</label>
-                  <input type="text" maxlength="25" v-model="person.name" id="name">
+                <div class="item summ">
+                  <label for="summ">Сумма:</label>
+                  <input type="number" v-model="payment.summ" id="summ">
                 </div>
 
-                <div class="item passport">
-                  <label for="passport">Паспорт:</label>
-                  <input type="text" maxlength="25" v-model="person.serial_number" id="passport">
+                <div class="item prepayment">
+                  <label for="prepayment">Опис:</label>
+                  <input type="text" maxlength="25" v-model="payment.description" id="prepayment">
                 </div>
 
                 <div class="item date">
                   <label for="date">Дата:</label>
-                  <input type="date" v-model="person.birth_date" id="date">
-                </div>
-
-                <div class="item job">
-                  <label for="job">Професія:</label>
-                  <input type="text" maxlength="25" v-model="person.career">
+                  <input type="datetime-local" v-model="payment.date_of_pay" id="date">
                   <div class="error">
                       {{ error }}
                   </div>
@@ -89,7 +83,7 @@
 
               <div class="buttons">
                   <v-button :style="{ background: 'linear-gradient(90deg, #bd5252, #f0aaaa)' }" @click.native="showModal = false">закрити</v-button>
-                  <v-button @click.native="addPerson">додати</v-button>
+                  <v-button @click.native="addPaymentLocaly">додати</v-button>
               </div>
             </div>
           </template>
@@ -99,7 +93,7 @@
 </template>
 
 <script>
-import { mapGetters, mapMutations } from 'vuex'
+import { mapMutations } from 'vuex';
 import ModalWindow from '../components/ModalWindow'
 import VButton from '../components/VButton'
 
@@ -107,53 +101,47 @@ export default {
   name: 'Folder',
   data: () => ({
     tableHeader: [
-      { obj: "Ім'я", type: "string", order: "top" },
-      { obj: "Професія", type: "string", order: "top" },
-      { obj: "Дата", type: "date", order: "top" },
-      { obj: "Паспорт", type: "string", order: "top" }
+      { obj: "Сумма", type: "number", order: "top" },
+      { obj: "Опис", type: "string", order: "top" },
+      { obj: "Дата", type: "date", order: "top" }
     ],
-    typeOfSort: { obj: "Ім'я", type: "string", order: "top" },
-    notFound: false,
-    folder: {},
+    typeOfSort: { obj: "Сумма", type: "number", order: "top" },
     search: "",
     showModal: false,
-    person: { name: "", serial_number: "", birth_date: "", career: "" },
+    payment: { summ: null, description: "", date_of_pay: "", worker: Number },
     error: "",
+    adding: true
   }),
+  filters: {
+      handleDate(val) {
+          return new Date(val).toGMTString()
+      }
+  },
+  watch: {
+      prepayments(val) {
+          console.log(val)
+      }
+  },
   methods: {
-    ...mapMutations(["createPerson"]),
-    queryFolder(name) {
-      let folder = this.folders.filter(folder => folder.title === name)
-      if ( folder[0] ) {
-        this.notFound = false
-        this.folder = folder[0]
-      } else {
-        this.notFound = true
-      }
-    },
-    openPerson(person) {
-      if ( this.$route.query.person !== person ) {
-        this.$router.push({ name: 'Person', query: { person: person, folder: this.folder.title } })
-      }
-    },
-    addPerson() {
-      const { name, serial_number, birth_date, career } = this.person
-      if ( name.length && serial_number.length && birth_date.length && career.length ) {
-          if ( !this.folder.people.filter(person => person.name === name).length ) {
-            this.createPerson({ person: JSON.parse(JSON.stringify(this.person)), folderName: this.folderName })
+      ...mapMutations(['addPayment']),
+    addPaymentLocaly() {
+        if ( this.adding ) {
+            this.adding = false
+            const { summ, description, date_of_pay } = this.payment
+            if ( summ != undefined && description.length && date_of_pay != undefined ) {
+              this.addPayment({ folderTitle: this.info.folderTitle, personName: this.info.personName, payment: JSON.parse(JSON.stringify(this.payment)) })
 
-            this.showModal = false
-
-            this.person.name = ""
-            this.person.serial_number = ""
-            this.person.birth_date = ""
-            this.person.career = ""
-          } else {
-              this.setError("людина під цим іменем вже існує")
-          }
-      } else {
-        this.setError('всі поля повинні бути заповнені')
-      }
+              this.showModal = false
+      
+              this.payment.summ = Number
+              this.payment.description = ""
+              this.payment.date_of_pay = ""
+              this.adding = true
+            } else {
+              this.setError('всі поля повинні бути заповнені')
+              this.adding = true
+            }
+        }
     },
     setError(text) {
       this.error = text
@@ -171,43 +159,34 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['folders']),
-    sortedPerson() {
-      if ( this.folder.people ) {
-        let people = this.folder.people.filter(person => (
-          person.name.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
-          person.career.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
-          person.birth_date.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
-          person.serial_number.toLowerCase().trim().includes(this.search.toLowerCase().trim()) 
+    sortedPrepayments() {
+      if ( this.prepayments ) {
+        let prepayments = this.prepayments.filter(payment => (
+          payment.summ.toString().toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
+          payment.description.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
+          payment.date_of_pay.toLowerCase().trim().includes(this.search.toLowerCase().trim())
         ))
 
         if ( this.typeOfSort.type === 'date' ) {
-          people.sort((a,b) => b.birth_date - a.birth_date);
-          people = this.typeOfSort.order === 'down' ? people.reverse() : people
+          prepayments.sort((a,b) => new Date(b.birth_date) - new Date(a.birth_date));
+          prepayments = this.typeOfSort.order === 'down' ? prepayments.reverse() : prepayments
+        } else if ( this.typeOfSort.type === 'number' ) {
+          prepayments.sort((a, b) => a.name > b.name)
+          prepayments = this.typeOfSort.order === 'down' ? prepayments.reverse() : prepayments
         } else if ( this.typeOfSort.type === 'string' ) {
-          people.sort((a, b) => a.name.localeCompare(b.name))
-          people = this.typeOfSort.order === 'down' ? people.reverse() : people
+          prepayments.sort((a, b) => a.name.localeCompare(b.name))
+          prepayments = this.typeOfSort.order === 'down' ? prepayments.reverse() : prepayments
         }
 
-        return people
+        return prepayments
       } else {
         return []
       }
     },
-    folderName() {
-      return this.$route.params.folder
-    }
   },
-  watch: {
-    folderName(val) {
-      this.queryFolder(val)
-    },
-    folders() {
-      this.queryFolder(this.$route.params.folder)
-    }
-  },
-  mounted() {
-    this.queryFolder(this.$route.params.folder)
+  props: {
+      prepayments: Array,
+      info: Object,
   },
   components: {
     ModalWindow,

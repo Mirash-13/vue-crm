@@ -101,6 +101,7 @@ export default {
   methods: {
       ...mapMutations(['createFolder']),
       addFolderDB(title) {
+        console.log(title)
         // await fetch(`${this.uri}/folders/`, { method: 'POST' })
         // .then(res => res.text())
         // .then((data) => {

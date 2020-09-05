@@ -27,6 +27,7 @@ export default {
    async queryDate(){
      let folders = []
      let people = []
+     let prepayments = []
 
       await fetch(`${this.uri}/folders/`)
       .then(res => res.text())
@@ -48,9 +49,23 @@ export default {
         }
       })
 
+      await fetch(`${this.uri}/prepayments/`)
+      .then(res => res.text())
+      .then((data) => {
+        try {
+          prepayments = JSON.parse(data);
+        } catch {
+          console.log('err')
+        }
+      })
+
       folders.forEach(folder => {
         folder.people = people.filter(person => person.folder_id === folder.id)
+        folder.people.forEach(person => {
+          person.prepayments = prepayments.filter(pay => pay.worker === person.id)
+        })
       })
+      console.log(folders)
 
       this.setFolders(folders)
     }
