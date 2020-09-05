@@ -1,6 +1,5 @@
 <template>
   <div class="folder">
-    <template v-if="prepayments">
       <div class="header">
         <div class="title">
           Prepayments
@@ -19,39 +18,38 @@
         </div>
       </div>
 
-      <div class="list">
-        <table class="content-table">
-          <thead>
-            <tr>
-              <th v-for="item in tableHeader"
-                :key="`table_header_${item.obj}`"
-              >
-                <span class="text" @click="changeSort(item)">
-                  {{ item.obj }}
-                  
-                  <div v-if="typeOfSort.obj === item.obj"
-                    :style="{
-                      transform: `rotate(${ typeOfSort.order === 'top' ? 225 : 45 }deg)`
-                    }"
-                    class="arrow"
-                  ></div>
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody class="scroll">
-            <tr v-for="payment in sortedPrepayments" :key="`payment_tr_${payment.id}`">
-              <td>{{ payment.summ }}</td>
-              <td>{{ payment.description }}</td>
-              <td>{{ payment.date_of_pay }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </template>
-
+    <div class="list" v-if="prepayments">
+    <table class="content-table">
+        <thead>
+        <tr>
+            <th v-for="item in tableHeader"
+            :key="`table_header_${item.obj}`"
+            >
+            <span class="text" @click="changeSort(item)">
+                {{ item.obj }}
+                
+                <div v-if="typeOfSort.obj === item.obj"
+                :style="{
+                    transform: `rotate(${ typeOfSort.order === 'top' ? 225 : 45 }deg)`
+                }"
+                class="arrow"
+                ></div>
+            </span>
+            </th>
+        </tr>
+        </thead>
+        <tbody class="scroll">
+        <tr v-for="payment in sortedPrepayments" :key="`payment_tr_${payment.id}`">
+            <td>{{ payment.summ }}</td>
+            <td>{{ payment.description }}</td>
+            <td>{{ payment.date_of_pay }}</td>
+        </tr>
+        </tbody>
+    </table>
+    </div>
+      
     <div class="not-found" v-else>
-      не знайдено
+        не знайдено
     </div>
 
     <transition name="modal-fade">
@@ -115,11 +113,6 @@ export default {
   filters: {
       handleDate(val) {
           return new Date(val).toGMTString()
-      }
-  },
-  watch: {
-      prepayments(val) {
-          console.log(val)
       }
   },
   methods: {

@@ -65,7 +65,6 @@ export default {
           person.prepayments = prepayments.filter(pay => pay.worker === person.id)
         })
       })
-      console.log(folders)
 
       this.setFolders(folders)
     }
