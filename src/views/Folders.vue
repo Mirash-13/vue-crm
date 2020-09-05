@@ -104,7 +104,7 @@ export default {
           const { title } = this.folder
           if ( title.length ) {
               if ( !this.folders.filter(folder => folder.title === title).length  ) {
-                this.createPerson({ title, date: new Date(), people: [] })
+                this.createFolder({ title, date: new Date(), people: [] })
 
                 this.showModal = false
 
