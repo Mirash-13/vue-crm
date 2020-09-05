@@ -7,32 +7,32 @@ export default new Vuex.Store({
   state: {
     folders: [
       {
-        name: "tankstu", people: [
-          { name: "alex", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "borat", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "Garik", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "alex2", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "borat2", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "Garik2", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "alex3", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "borat3", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "Garik3", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "alex4", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "borat4", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "Garik4", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "alex5", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "borat5", passport: "pasdfsf22", job: "some job", date: "some date" },
-          { name: "Garik5", passport: "pasdfsf22", job: "some job", date: "some date" },
+        name: "tankstu", date: "1999-10-10", people: [
+          { name: "alex", passport: "pasdfsf22", job: "some job", date: "1999-09-29" },
+          { name: "borat", passport: "pasdfsf22", job: "some job", date: "1999-09-11" },
+          { name: "Garik", passport: "pasdfsf22", job: "some job", date: "1999-09-12" },
+          { name: "alex2", passport: "pasdfsf22", job: "some job", date: "1999-02-11" },
+          { name: "borat2", passport: "pasdfsf22", job: "some job", date: "1999-02-11" },
+          { name: "Garik2", passport: "pasdfsf22", job: "some job", date: "1999-09-21" },
+          { name: "alex3", passport: "pasdfsf22", job: "some job", date: "1999-09-11" },
+          { name: "borat3", passport: "pasdfsf22", job: "some job", date: "1999-09-11" },
+          { name: "Garik3", passport: "pasdfsf22", job: "some job", date: "1999-09-01" },
+          { name: "alex4", passport: "pasdfsf22", job: "some job", date: "1999-09-11" },
+          { name: "borat4", passport: "pasdfsf22", job: "some job", date: "1999-09-11" },
+          { name: "Garik4", passport: "pasdfsf22", job: "some job", date: "1999-09-30" },
+          { name: "alex5", passport: "pasdfsf22", job: "some job", date: "1999-09-11" },
+          { name: "borat5", passport: "pasdfsf22", job: "some job", date: "1999-02-11" },
+          { name: "Garik5", passport: "pasdfsf22", job: "some job", date: "1999-09-11" },
         ]
       },
       {
-        name: "stomatologi", people: [
+        name: "stomatologi", date: "2013-02-10", people: [
           { name: "John", passport: "pasdfsf22", job: "some job", date: "some date" },
           { name: "Amanda", passport: "pasdfsf22", job: "some job", date: "some date" }
         ]
       },
       {
-        name: "shkolota", people: [
+        name: "shkolota", date: "2002-09-10", people: [
           { name: "alexsss", passport: "pasdfsf22", job: "some job", date: "some date" }
         ]
       },

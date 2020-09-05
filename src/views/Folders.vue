@@ -2,22 +2,52 @@
   <div class="folder">
     <div class="header">
       <div class="title">
-        All folders
+        Всі папки
       </div>
 
       <div class="actions">
         <input type="search" v-model="search">
-        <button @click="showModal = true">add folder</button>
+        <v-button @click.native="showModal = true" :style="{
+              height: '120%',
+              width: '90px',
+              fontSize: '12px'
+            }"
+          >
+            дод. папку
+          </v-button>
       </div>
     </div>
 
     <div class="list">
-      <div v-for="folder in sortedFolders" :key="`folder_list_${folder.name}`" class="folder">
-          {{ folder.name }}
-      </div>
+      <table class="content-table">
+        <thead>
+          <tr>
+            <th v-for="item in tableHeader"
+              :key="`folder_list_${item.obj}`"
+            >
+              <span class="text" @click="changeSort(item)">
+                {{ item.obj }}
+                
+                <div v-if="typeOfSort.obj === item.obj"
+                  :style="{
+                    transform: `rotate(${ typeOfSort.order === 'top' ? 225 : 45 }deg)`
+                  }"
+                  class="arrow"
+                ></div>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="scroll">
+          <tr v-for="folder in sortedFolders" :key="`folder_tr_${folder.name}`" @click="openFolder(folder.name)">
+            <td>{{ folder.name }}</td>
+            <td>{{ folder.date }}</td>
+          </tr>
+        </tbody>
+      </table>
 
       <div class="empty" v-if="!sortedFolders.length">
-          empty
+          пусто
       </div>
     </div>
 
@@ -27,18 +57,26 @@
         >
             <template #modal>
                 <div class="modal">
-                    <div class="title">Input folder's name</div>
+                    <div class="title">Введіть назву</div>
 
                     <div class="input">
-                        <input type="text" maxlength="25" v-model="inputFolder" @keydown.enter="addFolder">
+                      <div class="item name">
+                        <label for="name">Ім'я:</label>
+                        <input type="text" maxlength="25" v-model="folder.name" id="name">
+                      </div>
+
+                      <div class="item date">
+                        <label for="date">Дата:</label>
+                        <input type="date" v-model="folder.date" id="date">
                         <div class="error">
-                            {{ error }}
-                        </div>
+                              {{ error }}
+                          </div>
+                      </div>
                     </div>
 
                     <div class="buttons">
-                        <button class="close" @click="showModal = false">close</button>
-                        <button class="add" @click="addFolder">add</button>
+                        <v-button :style="{ background: 'linear-gradient(90deg, #bd5252, #f0aaaa)' }" @click.native="showModal = false">закрити</v-button>
+                        <v-button @click.native="addFolder">додати</v-button>
                     </div>
                 </div>
             </template>
@@ -50,48 +88,86 @@
 <script>
 import { mapGetters, mapMutations } from 'vuex'
 import ModalWindow from '../components/ModalWindow'
+import VButton from '../components/VButton'
 
 export default {
   name: 'Folders',
   data: () => ({
       search: "",
       showModal: false,
-      inputFolder: "",
-      error: ""
+      error: "",
+      tableHeader: [
+      { obj: "Назва", type: "string", order: "top" },
+      { obj: "Дата", type: "date", order: "top" },
+    ],
+    typeOfSort: { obj: "Назва", type: "string", order: "top" },
+    folder: { name: "", date: "" },
   }),
   methods: {
       ...mapMutations(['createFolder']),
       addFolder() {
-          if ( this.inputFolder.length ) {
-              if ( !this.folders.filter(folder => folder.name === this.inputFolder).length ) {
-                  let data = { name: this.inputFolder, people: [] }
-    
-                  this.createFolder(data)
-    
-                  this.showModal = false
-                  this.inputFolder = ""
+          const { name, date } = this.folder
+          if ( name.length && date.length ) {
+              if ( !this.folders.filter(folder => folder.name === name).length  ) {
+                this.createPerson({ name, date, people: [] })
+
+                this.showModal = false
+
+                this.folder.name = ""
+                this.folder.date = ""
               } else {
-                  this.setError("this folder already exist")
+                  this.setError("папка з таким ім'ям вже існує")
               }
           } else {
-            this.setError("field can't be empty")
+            this.setError("всі поля повинні бути заповнені")
           }
+      },
+      openFolder(folder) {
+        if ( this.$route.params.folder !== folder ) {
+          this.$router.push({ name: 'Folder', params: { folder: folder } })
+        }
       },
       setError(text) {
         this.error = text
         setTimeout(() => {
             this.error = ""
         }, 5000)
+      },
+      changeSort(typeOfSort) {
+        if ( this.typeOfSort.obj === typeOfSort.obj ) {
+          this.typeOfSort.order = this.typeOfSort.order === 'top' ? 'down' : 'top'
+        } else {
+          typeOfSort.order = 'top'
+          this.typeOfSort = typeOfSort
+        }
       }
   },
   computed: {
     ...mapGetters(['folders']),
     sortedFolders() {
-        return this.folders.filter(folder => folder.name.toLowerCase().trim().includes(this.search.toLowerCase().trim()))
+      if ( this.folders ) {
+        let folders = this.folders.filter(folder => (
+          folder.name.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
+          folder.date.toLowerCase().trim().includes(this.search.toLowerCase().trim())
+        ))
+
+        if ( this.typeOfSort.type === 'date' ) {
+          folders.sort((a,b) => new Date(b.date) - new Date(a.date));
+          folders = this.typeOfSort.order === 'down' ? folders.reverse() : folders
+        } else if ( this.typeOfSort.type === 'string' ) {
+          folders.sort((a, b) => a.name.localeCompare(b.name))
+          folders = this.typeOfSort.order === 'down' ? folders.reverse() : folders
+        }
+
+        return folders
+      } else {
+        return []
+      }
     }
   },
   components: {
-      ModalWindow
+      ModalWindow,
+      VButton
   }
 }
 </script>
@@ -103,11 +179,13 @@ export default {
   background: #e6e6e6;
   border-radius: 8px;
   color: #1D2D36;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
     .title {
       font-size: 14px;
       font-weight: bold;
@@ -147,66 +225,12 @@ export default {
       }
     }
   }
+  .list {
+    flex-grow: 1;
+    margin: 25px 0;
+  }
   .empty {  
     color: rgb(138, 138, 138);
-  }
-  .modal {
-      min-width: 250px;
-      min-height: 150px;
-      box-shadow: 0 0 3px #ccc;
-      border-radius: 14px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-around;
-      align-items: center;
-      background: #fff;
-      padding: 15px;
-      .title {
-          font-size: 16px;
-          font-weight: bold;
-      }
-      .input {
-          position: relative;
-          display: flex;
-          justify-content: center;
-          input {
-              padding: 4px 8px;
-              text-align: center;
-          }
-          .error {
-              position: absolute;
-              font-size: 10px;
-              bottom: 0;
-              transform: translateY(120%);
-              color: rgb(216, 125, 125);
-          }
-      }
-      .buttons {
-          width: 100%;
-          display: flex;
-          justify-content: space-around;
-          button {
-              width: 50px;
-              cursor: pointer;
-              height: 25px;
-              font-size: 12px;
-              border: 1px solid black;
-              border-radius: 0;
-              transition: .3s ease;
-          }
-          .close {
-              &:hover {
-                  transition: .3s ease;
-                  background-color: rgba(216, 125, 125, .5);
-              }
-          }
-          .add {
-              &:hover {
-                  transition: .3s ease;
-                  background-color: rgba(158, 216, 125, 0.5);
-              }
-          }
-      }
   }
 }
 </style>

@@ -27,8 +27,8 @@ export default {
   components: {
     navbar,
   }
-}
-</script>>
+};
+</script>
 
 <style lang="scss">
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap');
@@ -36,7 +36,11 @@ export default {
 * {
   padding: 0;
   margin: 0;
-  font-family: 'Ubuntu';
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 .modal-fade-enter, .modal-fade-leave-to {
   opacity: 0;
@@ -46,13 +50,14 @@ export default {
 }
 .content-table {
   border-collapse: collapse;
-  width: 400px;
-  table-layout: fixed;
   font-size: .9em;
   min-width: 400px;
   border-radius: 5px 5px 0 0;
   overflow: hidden !important;
   box-shadow: 0 0 20px rgba(0, 0, 0, .15);
+  width: 100%;
+  --main-color: #1D2D36;
+  height: 100%;
   thead {
     background: black;
     color: #fff;
@@ -62,7 +67,33 @@ export default {
       text-align: left;
       font-weight: bold;
       text-align: center;
-      display: block;
+      display: flex;
+    }
+    .text {
+      position: relative;
+      cursor: pointer;
+      user-select: none; 
+      .arrow {
+        position: absolute;
+        right: -24px;
+        bottom: 0;
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: .3s ease;
+        &::after {
+          content: "";
+          position: absolute;
+          border: solid rgb(224, 217, 217);
+          border-width: 0 2px 2px 0;
+          display: inline-block;
+          padding: 3px;
+          transform: translate(-1px, -1px);
+        }
+      }
     }
   }
   tbody {
@@ -73,6 +104,11 @@ export default {
     tr {
       border-bottom: 1px solid #ddd;
       transition: text-shadow .1s;
+      display: flex;
+      cursor: pointer;
+      td {
+        flex-grow: 1;
+      }
       &:nth-of-type(even) {
         background-color: #f3f3f3;
       }
@@ -87,9 +123,83 @@ export default {
   }
   th, td {
     padding: 12px 15px;
-    width: 200px;
+    flex-grow: 1;
   }
 }
+
+.modal {
+  min-width: 250px;
+  min-height: 150px;
+  box-shadow: 0 0 3px #ccc;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  background: #fff;
+  padding: 15px;
+  .title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+  }
+  .item {
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 15px;
+    label {
+      display: flex;
+      padding-right: 10px;
+      width: 80px;
+    }
+    input {
+      padding: 4px 8px;
+      text-align: center;
+      width: 200px;
+    }
+    .error {
+      position: absolute;
+      font-size: 10px;
+      bottom: 0;
+      transform: translateY(150%);
+      color: rgb(216, 125, 125);
+      left: 0;
+      right: 0;
+    }
+    &:last-child {
+      margin-bottom: 25px;
+    }
+  }
+  .buttons {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    button {
+      width: 50px;
+      cursor: pointer;
+      height: 25px;
+      font-size: 12px;
+      border: 1px solid black;
+      border-radius: 0;
+      transition: .3s ease;
+    }
+    .close {
+      &:hover {
+        transition: .3s ease;
+        background-color: rgba(216, 125, 125, .5);
+      }
+    }
+    .add {
+      &:hover {
+        transition: .3s ease;
+        background-color: rgba(158, 216, 125, 0.5);
+      }
+    }
+  }
+}
+
 .scroll::-webkit-scrollbar-button {  background-color: #1D2D36; height: 0; }
 .scroll::-webkit-scrollbar-track {  background-color: none;}
 .scroll::-webkit-scrollbar-track-piece { background-color: #ffffff; border-radius: 5px;}

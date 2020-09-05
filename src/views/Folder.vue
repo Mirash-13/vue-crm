@@ -8,7 +8,14 @@
 
         <div class="actions">
           <input type="search" v-model="search" >
-          <button @click="showModal = true">add person</button>
+          <v-button @click.native="showModal = true" :style="{
+              height: '120%',
+              width: '90px',
+              fontSize: '12px'
+            }"
+          >
+            дод. людину
+          </v-button>
         </div>
       </div>
 
@@ -16,10 +23,20 @@
         <table class="content-table">
           <thead>
             <tr>
-              <th @click="changeSort('string')">Name</th>
-              <th @click="changeSort('string')">Job</th>
-              <th @click="changeSort('date')">Date</th>
-              <th @click="changeSort('string')">Passport</th>
+              <th v-for="item in tableHeader"
+                :key="`table_header_${item.obj}`"
+              >
+                <span class="text" @click="changeSort(item)">
+                  {{ item.obj }}
+                  
+                  <div v-if="typeOfSort.obj === item.obj"
+                    :style="{
+                      transform: `rotate(${ typeOfSort.order === 'top' ? 225 : 45 }deg)`
+                    }"
+                    class="arrow"
+                  ></div>
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody class="scroll">
@@ -35,49 +52,48 @@
     </template>
 
     <div class="not-found" v-else>
-      not found
+      не знайдено
     </div>
 
     <transition name="modal-fade">
         <ModalWindow @clickOutside="(close) => showModal === true ? showModal = close : showModal = showModal"
             v-if="showModal"
         >
-            <template #modal>
-                <div class="modal">
-                    <div class="title">Input person info</div>
-
-                    <div class="input">
-                      <div class="item name">
-                        <label for="name">Name:</label>
-                        <input type="text" maxlength="25" v-model="person.name" id="name">
-                      </div>
-
-                      <div class="item passport">
-                        <label for="passport">Passport:</label>
-                        <input type="text" maxlength="25" v-model="person.passport" id="passport">
-                      </div>
-
-                      <div class="item date">
-                        <label for="date">Date:</label>
-                        <input type="date" v-model="person.date" id="date">
-                      </div>
-
-                      <div class="item job">
-                        <label for="job">Job:</label>
-                        <input type="text" maxlength="25" v-model="person.job">
-                        <div class="error">
-                            {{ error }}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="buttons">
-                        <button class="close" @click="showModal = false">close</button>
-                        <button class="add" @click="addPerson">add</button>
-                    </div>
+          <template #modal>
+            <div class="modal">
+              <div class="title">Введіть дані: </div>
+              <div class="input">
+                <div class="item name">
+                  <label for="name">Ім'я:</label>
+                  <input type="text" maxlength="25" v-model="person.name" id="name">
                 </div>
-            </template>
-        </ModalWindow>
+
+                <div class="item passport">
+                  <label for="passport">Паспорт:</label>
+                  <input type="text" maxlength="25" v-model="person.passport" id="passport">
+                </div>
+
+                <div class="item date">
+                  <label for="date">Дата:</label>
+                  <input type="date" v-model="person.date" id="date">
+                </div>
+
+                <div class="item job">
+                  <label for="job">Професія:</label>
+                  <input type="text" maxlength="25" v-model="person.job">
+                  <div class="error">
+                      {{ error }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="buttons">
+                  <v-button :style="{ background: 'linear-gradient(90deg, #bd5252, #f0aaaa)' }" @click.native="showModal = false">закрити</v-button>
+                  <v-button @click.native="addPerson">додати</v-button>
+              </div>
+            </div>
+          </template>
+      </ModalWindow>
     </transition>
   </div>
 </template>
@@ -85,17 +101,24 @@
 <script>
 import { mapGetters, mapMutations } from 'vuex'
 import ModalWindow from '../components/ModalWindow'
+import VButton from '../components/VButton'
 
 export default {
   name: 'Folder',
   data: () => ({
+    tableHeader: [
+      { obj: "Ім'я", type: "string", order: "top" },
+      { obj: "Професія", type: "string", order: "top" },
+      { obj: "Дата", type: "date", order: "top" },
+      { obj: "Паспорт", type: "string", order: "top" }
+    ],
+    typeOfSort: { obj: "Ім'я", type: "string", order: "top" },
     notFound: false,
     folder: {},
     search: "",
     showModal: false,
     person: { name: "", passport: "", date: "", job: "" },
     error: "",
-    typeOfSort: "string top"
   }),
   methods: {
     ...mapMutations(["createPerson"]),
@@ -108,27 +131,27 @@ export default {
       }
     },
     openPerson(person) {
-      if ( this.$route.params.person !== person ) {
-        this.$router.push({ path: 'Person', params: { person: person } })
+      if ( this.$route.query.person !== person ) {
+        this.$router.push({ name: 'Person', query: { person: person, folder: this.folder.name } })
       }
     },
     addPerson() {
       const { name, passport, date, job } = this.person
       if ( name.length && passport.length && date.length && job.length ) {
           if ( !this.folder.people.filter(person => person.name === name).length ) {
-              this.createPerson({ person: JSON.parse(JSON.stringify(this.person)), folderName: this.folderName })
+            this.createPerson({ person: JSON.parse(JSON.stringify(this.person)), folderName: this.folderName })
 
-              this.showModal = false
+            this.showModal = false
 
-              this.person.name = ""
-              this.person.passport = ""
-              this.person.date = ""
-              this.person.job = ""
+            this.person.name = ""
+            this.person.passport = ""
+            this.person.date = ""
+            this.person.job = ""
           } else {
-              this.setError("the person already exist")
+              this.setError("людина під цим іменем вже існує")
           }
       } else {
-        this.setError('all fields must be filled')
+        this.setError('всі поля повинні бути заповнені')
       }
     },
     setError(text) {
@@ -138,14 +161,11 @@ export default {
       }, 5000)
     },
     changeSort(typeOfSort) {
-      if ( this.typeOfSort.includes(typeOfSort) ) {
-        if ( this.typeOfSort.includes('top') ) {
-          this.typeOfSort = `${typeOfSort} down`
-        } else {
-          this.typeOfSort = ""
-        }
+      if ( this.typeOfSort.obj === typeOfSort.obj ) {
+        this.typeOfSort.order = this.typeOfSort.order === 'top' ? 'down' : 'top'
       } else {
-        this.typeOfSort = `${typeOfSort} top`
+        typeOfSort.order = 'top'
+        this.typeOfSort = typeOfSort
       }
     }
   },
@@ -160,14 +180,13 @@ export default {
           person.passport.toLowerCase().trim().includes(this.search.toLowerCase().trim()) 
         ))
 
-        if ( this.typeOfSort.includes('date') ) {
-          console.log('date')
-          console.log(this.typeOfSort.includes('top') ? 'top' : 'down')
-        } else if ( this.typeOfSort.includes('string') ) {
-          console.log('string')
-          console.log(this.typeOfSort.includes('top') ? 'top' : 'down')
+        if ( this.typeOfSort.type === 'date' ) {
+          people.sort((a,b) => new Date(b.date) - new Date(a.date));
+          people = this.typeOfSort.order === 'down' ? people.reverse() : people
+        } else if ( this.typeOfSort.type === 'string' ) {
+          people.sort((a, b) => a.name.localeCompare(b.name))
+          people = this.typeOfSort.order === 'down' ? people.reverse() : people
         }
-        // people.sort((a, b) => a.name.localeCompare(b.name))
 
         return people
       } else {
@@ -187,9 +206,10 @@ export default {
     this.queryFolder(this.$route.params.folder)
   },
   components: {
-    ModalWindow
+    ModalWindow,
+    VButton
   }
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -224,40 +244,11 @@ export default {
         width: 200px;
         box-shadow: 0 0 3px #ccc;
       }
-      button {
-        height: 100%;
-        width: 80px;
-        padding: 0 5px;
-        cursor: pointer;
-        border-radius: 4px;
-        border: 1px solid #000;
-        background-color: #ccc;
-        transition: .2s ease;
-        &:hover {
-          background-color: #fff;
-          border: 1px solid #ccc;
-          transition: .2s ease;
-        }
-        &:active {
-          transform: scale(.9);
-          transition: .2s ease;
-        }
-      }
     }
   }
   .list {
     flex-grow: 1;
     margin: 25px 0;
-    table {
-      width: 100%;
-      --main-color: #1D2D36;
-      height: 100%;
-      tbody {
-        tr {
-          cursor: pointer;
-        }
-      }
-    }
   }
   .not-found {
     display: flex;
@@ -265,78 +256,6 @@ export default {
     align-items: center;
     width: 100%;
     height: 100%;
-  }
-  .modal {
-      min-width: 250px;
-      min-height: 150px;
-      box-shadow: 0 0 3px #ccc;
-      border-radius: 14px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-around;
-      align-items: center;
-      background: #fff;
-      padding: 15px;
-      .title {
-          font-size: 16px;
-          font-weight: bold;
-          margin-bottom: 15px;
-      }
-      .item {
-        position: relative;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        margin-bottom: 15px;
-        label {
-          display: flex;
-          padding-right: 10px;
-          width: 80px;
-        }
-        input {
-          padding: 4px 8px;
-          text-align: center;
-          width: 200px;
-        }
-        .error {
-          position: absolute;
-          font-size: 10px;
-          bottom: 0;
-          transform: translateY(150%);
-          color: rgb(216, 125, 125);
-          left: 0;
-          right: 0;
-        }
-        &:last-child {
-          margin-bottom: 25px;
-        }
-      }
-      .buttons {
-          width: 100%;
-          display: flex;
-          justify-content: space-around;
-          button {
-              width: 50px;
-              cursor: pointer;
-              height: 25px;
-              font-size: 12px;
-              border: 1px solid black;
-              border-radius: 0;
-              transition: .3s ease;
-          }
-          .close {
-              &:hover {
-                  transition: .3s ease;
-                  background-color: rgba(216, 125, 125, .5);
-              }
-          }
-          .add {
-              &:hover {
-                  transition: .3s ease;
-                  background-color: rgba(158, 216, 125, 0.5);
-              }
-          }
-      }
   }
 }
 </style>
