@@ -1,7 +1,9 @@
 <template>
   <div class="link">
     <div class="title" @click="openFolder(folder.title)">
-      {{ folder.title }}
+      <span class="text">
+        {{ folder.title }}
+      </span>
 
       <div @click.stop="show = !show"
         v-if="folder.people.length"
@@ -15,9 +17,9 @@
     <transition name="show">
       <div v-show="show" class="people scroll">
         <div v-for="person in folder.people"
-          :key="`person_${person.name}`"
+          :key="`person_${person.id}`"
           class="person"
-          @click="openPerson(person.name)"
+          @click="openPerson(person.id)"
         >
           {{ person.name }}
         </div>
@@ -32,8 +34,19 @@ export default {
   data: () => ({
     show: false
   }),
+  watch: {
+    $route(to) {
+      if ( to.params.folder === this.folder.title && this.folder.people.length ) {
+        this.show = true
+      }
+    }
+  },
   methods: {
     openFolder(folder) {
+      if ( this.folder.people.length && !this.show ) {
+        this.show = true
+      }
+
       if ( this.$route.params.folder !== folder ) {
         this.$router.push({ name: 'Folder', params: { folder: folder } })
       }
@@ -69,8 +82,12 @@ export default {
     align-items: flex-start;
     padding: 3px 8px;
     font-size: 14px;
+    transition: .2s ease;
     &:hover {
-      text-decoration: underline;
+      .text {
+        transform: scale(1.1);
+        transition: .2s ease;
+      }
     }
     .arrow {
       position: absolute;
@@ -110,9 +127,10 @@ export default {
       display: flex;
       font-size: 12px;
       color: rgb(212, 212, 212);
+      padding-left: 10px;
       &:hover {
-        text-decoration: underline;
         color: white;
+        background: #6d6d6d;
       }
     }
   }

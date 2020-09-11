@@ -7,26 +7,19 @@
 
       <div class="actions">
         <input type="search" v-model="search">
-        <v-button @click.native="showModal = true" :style="{
-              height: '120%',
-              width: '90px',
-              fontSize: '12px'
-            }"
-          >
-            дод. папку
-          </v-button>
+        <button @click="showModal = true">дод. папку</button>
       </div>
     </div>
 
     <div class="list">
-      <table class="content-table">
+      <table class="content-table" :style="{ '--column-count': tableHeader.length, '--main-color': mainColor }">
         <thead>
           <tr>
             <th v-for="item in tableHeader"
               :key="`folder_list_${item.obj}`"
             >
               <span class="text" @click="changeSort(item)">
-                {{ item.obj }}
+                {{ item.name }}
                 
                 <div v-if="typeOfSort.obj === item.obj"
                   :style="{
@@ -40,6 +33,7 @@
         </thead>
         <tbody class="scroll">
           <tr v-for="folder in sortedFolders" :key="`folder_tr_${folder.id}`" @click="openFolder(folder.title)">
+            <td>{{ folder.id }}</td>
             <td>{{ folder.title }}</td>
             <td>{{ folder.time | handleDate}}</td>
           </tr>
@@ -57,7 +51,7 @@
         >
             <template #modal>
                 <div class="modal">
-                    <div class="title">Введіть назву</div>
+                    <div class="title">Додавання папки</div>
 
                     <div class="input">
                       <div class="item name">
@@ -70,8 +64,8 @@
                     </div>
 
                     <div class="buttons">
-                        <v-button :style="{ background: 'linear-gradient(90deg, #bd5252, #f0aaaa)' }" @click.native="showModal = false">закрити</v-button>
-                        <v-button @click.native="addFolder">додати</v-button>
+                        <button class="close" @click="showModal = false">закрити</button>
+                        <button class="add" @click="addFolder">додати</button>
                     </div>
                 </div>
             </template>
@@ -83,7 +77,6 @@
 <script>
 import { mapGetters, mapMutations } from 'vuex'
 import ModalWindow from '../components/ModalWindow'
-import VButton from '../components/VButton'
 
 export default {
   name: 'Folders',
@@ -92,23 +85,49 @@ export default {
       showModal: false,
       error: "",
       tableHeader: [
-      { obj: "Назва", type: "string", order: "top" },
-      { obj: "Дата", type: "date", order: "top" },
+      { name: "ID", obj: "id", type: "string", order: "top" },
+      { name: "Назва", obj: "title", type: "string", order: "top" },
+      { name: "Дата", obj: "time", type: "date", order: "top" },
     ],
-    typeOfSort: { obj: "Назва", type: "string", order: "top" },
+    typeOfSort: { name: "Назва", obj: "title", type: "string", order: "top" },
     folder: { title: "" },
   }),
   methods: {
       ...mapMutations(['createFolder']),
+      addFolderDB(title) {
+        return new Promise((resolve, reject) => {
+          fetch(`${this.uri}/folders/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ title })
+          })
+          .then(res => res.text())
+          .then((data) => {
+            try {
+              resolve(JSON.parse(data))
+            } catch(err) {
+              reject(err)
+            }
+          })
+        });
+      },
       addFolder() {
           const { title } = this.folder
           if ( title.length ) {
               if ( !this.folders.filter(folder => folder.title === title).length  ) {
-                this.createFolder({ title, date: new Date(), people: [] })
+                this.addFolderDB(title)
+                .then(({ title, time, id }) => {
+                  this.createFolder({ title, date: time, id, people: [] })
 
-                this.showModal = false
+                  this.showModal = false
 
-                this.folder.title = ""
+                  this.folder.title = ""
+                })
+                .catch(err => {
+                  console.error(err)
+                })
               } else {
                   this.setError("папка з таким ім'ям вже існує")
               }
@@ -142,7 +161,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['folders']),
+    ...mapGetters(['folders', 'uri', 'mainColor']),
     sortedFolders() {
       if ( this.folders ) {
         let folders = this.folders.filter(folder => (
@@ -151,10 +170,10 @@ export default {
         ))
 
         if ( this.typeOfSort.type === 'date' ) {
-          folders.sort((a,b) => new Date(b.time) - new Date(a.time));
+          folders.sort((a,b) => new Date(b[this.typeOfSort.obj]) - new Date(a[this.typeOfSort.obj]));
           folders = this.typeOfSort.order === 'down' ? folders.reverse() : folders
         } else if ( this.typeOfSort.type === 'string' ) {
-          folders.sort((a, b) => a.title.localeCompare(b.title))
+          folders.sort((a, b) => `${a[this.typeOfSort.obj]}`.localeCompare(`${b[this.typeOfSort.obj]}`))
           folders = this.typeOfSort.order === 'down' ? folders.reverse() : folders
         }
 
@@ -166,70 +185,10 @@ export default {
   },
   components: {
       ModalWindow,
-      VButton
   }
 }
 </script>
 
 <style lang="scss" scoped>
-.folder {
-  width: calc(100% - 20px);
-  height: calc(100% - 20px);
-  background: #e6e6e6;
-  border-radius: 8px;
-  color: #1D2D36;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    .title {
-      font-size: 14px;
-      font-weight: bold;
-    }
-    .actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 25px;
-      input {
-        border: none;
-        font-size: 12px;
-        padding: 4px 8px;
-        margin: 0 10px;
-        height: 100%;
-        width: 200px;
-        box-shadow: 0 0 3px #ccc;
-      }
-      button {
-        height: 100%;
-        width: 80px;
-        padding: 0 5px;
-        cursor: pointer;
-        border-radius: 4px;
-        border: 1px solid #000;
-        background-color: #ccc;
-        transition: .2s ease;
-        &:hover {
-          background-color: #fff;
-          border: 1px solid #ccc;
-          transition: .2s ease;
-        }
-        &:active {
-          transform: scale(.9);
-          transition: .2s ease;
-        }
-      }
-    }
-  }
-  .list {
-    flex-grow: 1;
-    margin: 25px 0;
-  }
-  .empty {  
-    color: rgb(138, 138, 138);
-  }
-}
+
 </style>

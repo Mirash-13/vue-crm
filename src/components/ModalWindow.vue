@@ -5,6 +5,7 @@
         <slot name="modal">
             modal
         </slot>
+        <button class="close" @click="emitingData(false)"></button>
       </div>
     </div>
   </transition>
@@ -37,11 +38,40 @@ export default {
     align-items: center;
     z-index: 9999;
     .modal {
-        background: #F8F8F5;
+      background: #F8F8F5;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      .close {
+        border: none;
+        background: none;
+        position: absolute;
         display: flex;
-        flex-direction: column;
         justify-content: center;
         align-items: center;
+        top: 24px;
+        right: 24px;
+        width: 24px !important;
+        height: 24px !important;
+        transition: .3s ease;
+        &:hover {
+          background: #ccc;
+          transition: .3s ease;
+        }
+        &:before, &:after {
+          content: "";
+          position: absolute;
+          width: 2px;
+          height: 18px;
+          background: var(--main-color);
+          transform: rotate(45deg);
+        }
+        &:before {
+          transform: rotate(-45deg);
+        } 
+      }
     }
 }
 </style>

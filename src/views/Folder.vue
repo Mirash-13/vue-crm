@@ -8,26 +8,27 @@
 
         <div class="actions">
           <input type="search" v-model="search" >
-          <v-button @click.native="showModal = true" :style="{
+          <button @click="showModal = true">дод. папку</button>
+          <!-- <v-button @click.native="showModal = true" :style="{
               height: '120%',
               width: '90px',
               fontSize: '12px'
             }"
           >
             дод. людину
-          </v-button>
+          </v-button> -->
         </div>
       </div>
 
       <div class="list">
-        <table class="content-table">
+        <table class="content-table" :style="{ '--column-count': tableHeader.length }">
           <thead>
             <tr>
               <th v-for="item in tableHeader"
                 :key="`table_header_${item.obj}`"
               >
                 <span class="text" @click="changeSort(item)">
-                  {{ item.obj }}
+                  {{ item.name }}
                   
                   <div v-if="typeOfSort.obj === item.obj"
                     :style="{
@@ -40,10 +41,15 @@
             </tr>
           </thead>
           <tbody class="scroll">
-            <tr v-for="person in sortedPerson" :key="`person_tr_${person.id}`" @click="openPerson(person.name)">
+            <tr v-for="person in sortedPerson"
+              :key="`person_tr_${person.id}`"
+              @click="openPerson(person.id)"
+            >
+              <td>{{ person.id }}</td>
               <td>{{ person.name }}</td>
               <td>{{ person.career }}</td>
               <td>{{ person.birth_date }}</td>
+              <td>{{ person.summ_for_hour }}</td>
               <td>{{ person.serial_number }}</td>
             </tr>
           </tbody>
@@ -61,7 +67,7 @@
         >
           <template #modal>
             <div class="modal">
-              <div class="title">Введіть дані: </div>
+              <div class="title">Додавання робочого</div>
               <div class="input">
                 <div class="item name">
                   <label for="name">Ім'я:</label>
@@ -74,8 +80,13 @@
                 </div>
 
                 <div class="item date">
-                  <label for="date">Дата:</label>
-                  <input type="date" v-model="person.birth_date" id="date">
+                  <label for="date">Рік:</label>
+                  <input type="number" v-model="person.birth_date" id="date">
+                </div>
+
+                <div class="item date">
+                  <label for="summ">Зарплата за годину:</label>
+                  <input type="number" v-model="person.summ_for_hour" id="summ">
                 </div>
 
                 <div class="item job">
@@ -88,8 +99,8 @@
               </div>
 
               <div class="buttons">
-                  <v-button :style="{ background: 'linear-gradient(90deg, #bd5252, #f0aaaa)' }" @click.native="showModal = false">закрити</v-button>
-                  <v-button @click.native="addPerson">додати</v-button>
+                  <button class="close" @click="showModal = false">закрити</button>
+                  <button class="add" @click="addPerson">додати</button>
               </div>
             </div>
           </template>
@@ -101,23 +112,24 @@
 <script>
 import { mapGetters, mapMutations } from 'vuex'
 import ModalWindow from '../components/ModalWindow'
-import VButton from '../components/VButton'
 
 export default {
   name: 'Folder',
   data: () => ({
     tableHeader: [
-      { obj: "Ім'я", type: "string", order: "top" },
-      { obj: "Професія", type: "string", order: "top" },
-      { obj: "Дата", type: "date", order: "top" },
-      { obj: "Паспорт", type: "string", order: "top" }
+      { name: "ID", obj: "id", type: "string", order: "top" },
+      { name: "Ім'я", obj: "name", type: "string", order: "top" },
+      { name: "Професія", obj: "career", type: "string", order: "top" },
+      { name: "Рік", obj: "birth_date", type: "number", order: "top" },
+      { name: "Зарплата за годину", obj: "summ_for_hour", type: "number", order: "top" },
+      { name: "Паспорт", obj: "serial_number", type: "string", order: "top" },
     ],
-    typeOfSort: { obj: "Ім'я", type: "string", order: "top" },
+    typeOfSort: { name: "Ім'я", obj: "name", type: "string", order: "top" },
     notFound: false,
-    folder: {},
     search: "",
+    folder: {},
     showModal: false,
-    person: { name: "", serial_number: "", birth_date: "", career: "" },
+    person: { name: "", serial_number: "", birth_date: "", career: "", summ_for_hour: "" },
     error: "",
   }),
   methods: {
@@ -136,18 +148,47 @@ export default {
         this.$router.push({ name: 'Person', query: { person: person, folder: this.folder.title } })
       }
     },
+    addPersonDB(data) {
+      return new Promise((resolve, reject) => {
+        fetch(`${this.uri}/workers/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(res => res.text())
+        .then((data) => {
+          try {
+            resolve(JSON.parse(data))
+          } catch(err) {
+            reject(err)
+          }
+        })
+      });
+    },
     addPerson() {
       const { name, serial_number, birth_date, career } = this.person
       if ( name.length && serial_number.length && birth_date.length && career.length ) {
           if ( !this.folder.people.filter(person => person.name === name).length ) {
-            this.createPerson({ person: JSON.parse(JSON.stringify(this.person)), folderName: this.folderName })
+            let person = JSON.parse(JSON.stringify(this.person))
+            person.folder_id = this.folder.id
 
-            this.showModal = false
-
-            this.person.name = ""
-            this.person.serial_number = ""
-            this.person.birth_date = ""
-            this.person.career = ""
+            this.addPersonDB(person)
+            .then((data) => {
+              data.prepayments = []
+              this.createPerson({ person: data, folderName: this.folderName })
+  
+              this.showModal = false
+  
+              this.person.name = ""
+              this.person.serial_number = ""
+              this.person.birth_date = ""
+              this.person.career = ""
+            })
+            .catch(err => {
+              console.error(err)
+            })
           } else {
               this.setError("людина під цим іменем вже існує")
           }
@@ -171,21 +212,21 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['folders']),
+    ...mapGetters(['folders', 'uri']),
     sortedPerson() {
       if ( this.folder.people ) {
         let people = this.folder.people.filter(person => (
           person.name.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
           person.career.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
-          person.birth_date.toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
+          person.birth_date.toString().toLowerCase().trim().includes(this.search.toLowerCase().trim()) ||
           person.serial_number.toLowerCase().trim().includes(this.search.toLowerCase().trim()) 
         ))
 
-        if ( this.typeOfSort.type === 'date' ) {
-          people.sort((a,b) => b.birth_date - a.birth_date);
+        if ( this.typeOfSort.type === 'number' ) {
+          people.sort((a,b) => b[this.typeOfSort.obj] > a[this.typeOfSort.obj]);
           people = this.typeOfSort.order === 'down' ? people.reverse() : people
         } else if ( this.typeOfSort.type === 'string' ) {
-          people.sort((a, b) => a.name.localeCompare(b.name))
+          people.sort((a, b) => `${a[this.typeOfSort.obj]}`.localeCompare(`${b[this.typeOfSort.obj]}`))
           people = this.typeOfSort.order === 'down' ? people.reverse() : people
         }
 
@@ -194,9 +235,6 @@ export default {
         return []
       }
     },
-    folderName() {
-      return this.$route.params.folder
-    }
   },
   watch: {
     folderName(val) {
@@ -206,60 +244,18 @@ export default {
       this.queryFolder(this.$route.params.folder)
     }
   },
+  props: {
+    folderName: String
+  },
   mounted() {
     this.queryFolder(this.$route.params.folder)
   },
   components: {
     ModalWindow,
-    VButton
   }
 };
 </script>
 
 <style lang="scss" scoped>
-.folder {
-  width: calc(100% - 20px);
-  height: calc(100% - 20px);
-  background: #e6e6e6;
-  border-radius: 8px;
-  color: #1D2D36;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    .title {
-      font-size: 14px;
-      font-weight: bold;
-    }
-    .actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 25px;
-      input {
-        border: none;
-        font-size: 12px;
-        padding: 4px 8px;
-        margin: 0 10px;
-        height: 100%;
-        width: 200px;
-        box-shadow: 0 0 3px #ccc;
-      }
-    }
-  }
-  .list {
-    flex-grow: 1;
-    margin: 25px 0;
-  }
-  .not-found {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-  }
-}
+
 </style>

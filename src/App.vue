@@ -1,29 +1,131 @@
 <template>
-  <div id="app">
-    <div class="header">
-        <input class="search" type="search">
+  <div id="app" :style="{ '--main-color': mainColor }">
+    <div class="header" @clickout.stop="show = false">
+      <div class="burger">
+        <button @click="showSidebar = !showSidebar"
+          @clickout="showSidebar = mobileVersion ? false : true"
+        >
+          <span v-for="item in 3"
+            :key="`burger_item_${item}`"
+            :style="{ width: showSidebar ? '' : '100% !important' }"
+          ></span>
+        </button>
+      </div>
+        <div class="search" @clickout="show = false"
+          @click="show = true"
+          :style="{ marginLeft: showSidebar ? ( mobileVersion ? 'calc(50% / 2)' : '200px' ) : 'calc(50% / 2)' }"
+        >
+          <input type="search" v-model="search" :style="{ borderRadius: `4px 4px ${ sortedList.length && search && show ? '0 0' : '4px 4px'}` }">
+          <transition name="show-search">
+            <div class="search-container scroll" v-if="sortedList.length && search && show">
+            <!-- <div class="search-container" v-show="sortedList.length"> -->
+              <div class="container scroll">
+                <div v-for="item in sortedList"
+                  :key="`search_item_${item.type}_${item.id}`"
+                  class="item"
+                  @click="openPage(item)"
+                >
+                  <span class="content">
+                    {{ item.title }}
+                  </span>
+                  <span class="title">
+                    {{ item.type }}
+                  </span>
+                  <div class="folder-title" v-if="item.type === 'person'">
+                    Папка: &ensp;
+                    {{ item.folder_title }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </transition>
+        </div>
         <div class="a-text">
           yyd
         </div>
     </div>
     
-    <div class="body">
-      <div class="nav">
-        <navbar></navbar>
+    <div class="body" @clickout.stop>
+      <div class="nav"
+        :style="{ width: showSidebar ? ( mobileVersion ? '50px' : '200px' ) : '50px' }"
+        @clickout="showSidebar = mobileVersion ? false : true"
+      >
+        <navbar :showSidebar="showSidebar"></navbar>
       </div>
 
-      <div class="folders">
-        <router-view/>
+      <div class="folders" :style="{ width: showSidebar ? mobileVersion ? 'calc(100% - 50px)' : 'calc(100% - 200px)' : 'calc(100vw - 50px)' }">
+        <transition name="change-page" appear mode="out-in">
+          <router-view/>
+        </transition>
       </div>
     </div>
-    <!-- <router-link to="/">Home</router-link> | -->
   </div>
 </template>
 
 <script>
+import { mapGetters, mapMutations } from 'vuex';
 import navbar from './views/Navbar'
 
 export default {
+  data: () => ({
+    search: "",
+    show: false,
+    showSidebar: true,
+    mobileVersion: false
+  }),
+  watch: {
+    width(val) {
+      if ( val <= 920 ) {
+        this.showSidebar = false
+        this.mobileVersion = true
+      } else {
+        this.mobileVersion = false
+      }
+    }
+  },
+  methods: {
+    ...mapMutations(['setWidth']),
+    openPage(item) {
+      if ( item.type === 'folder' && this.$route.params.folder !== item.title ) {
+        this.$router.push({ name: 'Folder', params: { folder: item.title } })
+      } else if ( item.type === 'person' && this.$route.query.person !== item.title ) {
+        this.$router.push({ name: 'Person', query: { person: item.title, folder: item.folder_title } })
+      }
+    },
+    getWindowWidth() {
+      this.setWidth(document.documentElement.clientWidth)
+    },
+  },
+  computed: {
+    ...mapGetters(['folders', 'mainColor', 'width']),
+    sortedList() {
+      let list = []
+
+      this.folders.forEach(folder => {
+        list.push({ title: folder.title, id: folder.id, type: 'folder' })
+        folder.people.forEach(person => list.push({
+          title: person.name,
+          id: person.id,
+          type: "person",
+          folder_id: person.folder_id,
+          folder_title: folder.title
+          }
+        ))
+      })
+
+      return list.filter(item => item.title.toLowerCase().trim().includes(this.search.toLowerCase().trim()))
+    }
+  },
+  mounted() {
+    window.addEventListener('resize', () => {
+      this.getWindowWidth()
+    })
+
+    this.getWindowWidth()
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.getWindowWidth);
+  },
   components: {
     navbar,
   }
@@ -31,16 +133,13 @@ export default {
 </script>
 
 <style lang="scss">
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap');
 
 * {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Syne', sans-serif;
+  outline: none;
 }
 .modal-fade-enter, .modal-fade-leave-to {
   opacity: 0;
@@ -51,7 +150,7 @@ export default {
 .content-table {
   border-collapse: collapse;
   font-size: .9em;
-  min-width: 400px;
+  // min-width: 700px;
   border-radius: 5px 5px 0 0;
   overflow: hidden !important;
   box-shadow: 0 0 20px rgba(0, 0, 0, .15);
@@ -62,7 +161,8 @@ export default {
     background: black;
     color: #fff;
     tr {
-      background-color: var(--main-color);
+      // background-color: var(--main-color);
+      background-color: #1D2D36;
       color: #fff;
       text-align: left;
       font-weight: bold;
@@ -72,11 +172,13 @@ export default {
     .text {
       position: relative;
       cursor: pointer;
-      user-select: none; 
+      user-select: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       .arrow {
         position: absolute;
         right: -24px;
-        bottom: 0;
         height: 20px;
         width: 20px;
         border-radius: 50%;
@@ -113,17 +215,21 @@ export default {
         background-color: #f3f3f3;
       }
       &:last-of-type {
-        border-bottom: 2px solid var(--main-color);
+        border-bottom: 2px solid #1D2D36;
       }
       &:hover {
         text-shadow: 1px 0 black;
-        color: var(--main-color);
+        color: #1D2D36;
       }
     }
   }
   th, td {
     padding: 12px 15px;
     flex-grow: 1;
+    width: calc(100% / var(--column-count));
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 
@@ -139,25 +245,26 @@ export default {
   background: #fff;
   padding: 15px;
   .title {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
   }
   .item {
     position: relative;
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
     label {
       display: flex;
       padding-right: 10px;
-      width: 80px;
+      min-width: 80px;
+      text-align: start;
     }
     input {
-      padding: 4px 8px;
       text-align: center;
-      width: 200px;
+      width: 200px !important;
+      height: 20px;
     }
     .error {
       position: absolute;
@@ -176,37 +283,243 @@ export default {
     width: 100%;
     display: flex;
     justify-content: space-around;
-    button {
-      width: 50px;
-      cursor: pointer;
-      height: 25px;
-      font-size: 12px;
-      border: 1px solid black;
-      border-radius: 0;
-      transition: .3s ease;
-    }
     .close {
-      &:hover {
-        transition: .3s ease;
-        background-color: rgba(216, 125, 125, .5);
-      }
-    }
-    .add {
-      &:hover {
-        transition: .3s ease;
-        background-color: rgba(158, 216, 125, 0.5);
-      }
+      --main-color: rgb(214, 73, 73);
     }
   }
 }
 
-.scroll::-webkit-scrollbar-button {  background-color: #1D2D36; height: 0; }
-.scroll::-webkit-scrollbar-track {  background-color: none;}
-.scroll::-webkit-scrollbar-track-piece { background-color: #ffffff; border-radius: 5px;}
-.scroll::-webkit-scrollbar-thumb { height: 10px; background-color: #333; border-radius: 3px;}
-.scroll::-webkit-scrollbar { width: 4px; height: 3px;}
-.scroll::-webkit-scrollbar-corner { background-color: #999;}
-.scroll::-webkit-resizer { background-color: #666;}
+.folder {
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  background: #e6e6e6;
+  border-radius: 8px;
+  color: #1D2D36;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .title {
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 25px;
+      .dates {
+        input {
+          width: 30%;
+          font-size: 12px;
+          height: auto;
+        }
+      }
+    }
+  }
+  .list {
+    flex-grow: 1;
+    margin: 25px 0;
+    overflow-x: auto;
+    border-radius: 5px 5px 0 0;
+  }
+  .not-found {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+  .empty {  
+    color: rgb(138, 138, 138);
+  }
+}
+
+input {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  margin: 0 10px;
+  height: 30px;
+  font-size: 14px;
+  width: 200px;
+  transition: .3s ease;
+  border-radius: 4px;
+  &:focus {
+    box-shadow: 0 0 4px var(--main-color);
+    transition: .3s ease;
+  }
+}
+
+button {
+  height: 30px;
+  width: 120px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  border: 1px solid var(--main-color);
+  color: var(--main-color);
+  background-color: #fff;
+  transition: .2s ease;
+  &:hover {
+    background-color: var(--main-color);
+    border: 1px solid var(--main-color);
+    color: white;
+    transition: .2s ease;
+  }
+  &:active {
+    transform: scale(.9);
+    transition: .2s ease;
+  }
+}
+
+*::-webkit-scrollbar-button {  background-color: #1D2D36; height: 0; }
+*::-webkit-scrollbar-track {  background-color: none;}
+*::-webkit-scrollbar-track-piece { background-color: #ffffff; border-radius: 5px;}
+*::-webkit-scrollbar-thumb { height: 10px; background-color: #333; border-radius: 3px;}
+*::-webkit-scrollbar { width: 4px; height: 3px;}
+*::-webkit-scrollbar-corner { background-color: #999;}
+*::-webkit-resizer { background-color: #666;}
+
+.show-search-enter-active {
+  animation: show-search-in .5s;
+  transform-origin: top;
+}
+.show-search-leave-active {
+  animation: show-search-in .5s reverse;
+  transform-origin: top;
+}
+@keyframes show-search-in {
+  0% {
+    transform: translateY(100%) scaleY(0);
+  }
+  50% {
+    transform: translateY(100%) scaleY(1.3);
+  }
+  100% {
+    transform: translateY(100%) scaleY(1);
+  }
+}
+
+.change-page-enter, .change-page-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.change-page-enter-active, .change-page-leave-active {
+  // transform: translateX(100%);
+  transition: .3s ease;
+}
+
+@media only screen and (max-width: 600px) {
+  .content-table {
+    font-size: 12px;
+  }
+  .folder {
+    .header {
+      .title {
+        font-size: 12px;
+      }
+    }
+  }
+  .search-container {
+    span {
+      font-size: 12px !important;
+    }
+  }
+  input {
+    padding: 3px 6px !important;
+    margin: 0 8px !important;
+    height: 20px !important;
+    font-size: 10px !important;
+    width: 140px !important;
+  }
+  button {
+    height: 20px !important;
+    width: 80px !important;
+    font-size: 10px !important;
+  }
+}
+@media only screen and (max-width: 500px) {
+  .content-table {
+    font-size: 10px;
+    thead {
+      .text {
+        .arrow {
+          width: 10px;
+          height: 10px;
+          right: auto;
+          // left: 0;
+          bottom: -11px;
+          &:after {
+            padding: 2px;
+          }
+        }
+      }
+    }
+    th, td {
+      padding: 6px 8px 12px 8px;
+    }
+  }
+  .search-container {
+    .item {
+      height: 30px !important;
+      span, div {
+        font-size: 10px !important;
+      }
+    }
+  }
+}
+@media only screen and (max-width: 420px) {
+  .folder {
+    .header {
+      .title {
+        font-size: 10px;
+      }
+    }
+  }
+  input {
+    padding: 3px 6px !important;
+    margin: 0 8px !important;
+    height: 20px !important;
+    font-size: 10px !important;
+    width: 80px !important;
+  }
+  button {
+    height: 20px !important;
+    width: 60px !important;
+    font-size: 10px !important;
+  }
+  .search-container {
+    .item {
+      span, div {
+        font-size: 8px !important;
+      }
+    }
+  }
+  .modal {
+    .item {
+      input {
+        width: 140px !important;
+      }
+    }
+  }
+}
+@media only screen and (max-width: 350px) {
+  .modal {
+    min-width: 200px;
+    .item {
+      input {
+        width: 100px !important;
+      }
+    }
+  }
+}
 </style>
 
 <style lang="scss" scoped>
@@ -227,14 +540,101 @@ export default {
     display: flex;
     align-items: center;
     position: relative;
+    .burger {
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      width: 50px;
+      left: 0;
+      button {
+        border: none;
+        background: none;
+        max-width: 5vw;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: flex-start;
+        height: 18px;
+        width: 30px;
+        span {
+          width: 100%;
+          height: 2px;
+          background: white;
+          transition: all .3s ease;
+          &:nth-child(2n) {
+            width: 75%;
+            transition: all .3s ease;
+          }
+          &:nth-child(3n) {
+            width: 50%;
+            transition: all .3s ease;
+          }
+        }
+      }
+    }
     .search {
-      width: calc(75vw / 2);
-      border-radius: 10px;
-      border: 1px solid black;
-      font-size: 14px;
-      margin-left: 25vw;
-      padding: 4px 8px;
-      background: rgb(218, 217, 217);
+      width: calc((100% - 200px) / 2);
+      min-width: 50%;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all .3s ease;
+      input {
+        width: 100% !important;
+        margin: 0 !important;
+      }
+      .search-container {
+        position: absolute;
+        bottom: 0;
+        box-shadow: 0 0 3px #6b6b6b;
+        transform: translateY(100%);
+        width: 100%;
+        border-radius: 0 0 12px 12px;
+        max-height: 240px;
+        background: rgb(255, 255, 255);
+        color: #53595e;
+        z-index: 9;
+        overflow: hidden;
+        .container {
+          overflow: auto;
+          max-height: inherit;
+        }
+        .item {
+          display: flex;
+          position: relative;
+          height: 50px;
+          align-items: center;
+          cursor: pointer;
+          box-shadow: 2px 0 2px rgb(100, 100, 100);
+          .content {
+            font-weight: bold;
+            font-size: 14px;
+            margin-left: 40px;
+          }
+          .title {
+            font-size: 12px;
+            top: 2px;
+            left: 4px;
+            position: absolute;
+          }
+          .folder-title {
+            position: absolute;
+            right: 0;
+            left: 50%;
+            max-height: 50%;
+            overflow-x: auto;
+            font-size: 12px;
+          }
+          &:hover {
+            background: rgb(233, 233, 233);
+            font-weight: bold;
+            transition: .2s ease;
+            .content {
+              color: rgb(0, 0, 0);
+            }
+          } 
+        }
+      }
     }
     .a-text {
       position: absolute;
@@ -247,10 +647,14 @@ export default {
     width: 100%;
     height: 90vh;
     .nav {
-      width: 25vw;
+      width: 200px;
+      transition: all .3s ease;
+      min-width: 50px;
+      position: relative;
     }
     .folders {
-      width: 75vw;
+      width: calc(100% - 200px);
+      transition: all .3s ease;
     }
   }
 }

@@ -1,14 +1,20 @@
 <template>
-  <div class="navbar">
+  <div class="navbar" :style="{ width: showSidebar ? '200px' : '50px' }">
     <div class="title" @click="openPage">
-      Всі папки
+      <span v-show="showSidebar">Всі папки</span>
+      <span v-show="!showSidebar">
+        <i class="material-icons">folder_open</i>
+      </span>
     </div>
 
-    <select-link v-for="folder in folders" 
-      :key="`folder_${folder.id}`"
-      :folder="folder"
-      class="select-link"
-    ></select-link>
+    <transition-group name="modal-fade" tag="div" class="transition-container">
+      <select-link v-for="folder in folders" 
+        :key="`folder_${folder.id}`"
+        :folder="folder"
+        class="select-link"
+        v-show="showSidebar"
+      ></select-link>
+    </transition-group>
   </div>
 </template>
 
@@ -75,6 +81,9 @@ export default {
   computed: {
     ...mapGetters(['folders', 'uri']),
   },
+  props: {
+    showSidebar: Boolean,
+  },
   components: {
     SelectLink
   }
@@ -91,9 +100,27 @@ export default {
     width: 80%;
     display: flex;
     cursor: pointer;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
   }
-  .select-link {
-    margin: 5px 0;
+  .transition-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: inherit;
+    .select-link {
+      margin: 5px 0;
+    }
+  }
+}
+
+@media only screen and (max-width: 920px) {
+  .navbar {
+    position: absolute;
+    background: #333;
+    z-index: 999;
   }
 }
 </style>

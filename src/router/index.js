@@ -12,7 +12,7 @@ Vue.use(VueRouter)
   {
     path: '/folder/:folder',
     name: 'Folder',
-    props: (route) => ({ folder: route.query.folder }),
+    props: (route) => ({ folderName: route.params.folder }),
     component: () => import('../views/Folder.vue')
   },
   {

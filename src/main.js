@@ -5,8 +5,10 @@ import router from './router'
 import store from './store'
 
 import VueOnClickout from 'vue-on-clickout';
+import VueTilt from 'vue-tilt.js'
 
 Vue.use(VueOnClickout);
+Vue.use(VueTilt)
 
 Vue.config.productionTip = false
 
